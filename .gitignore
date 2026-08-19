@@ -1,0 +1,48 @@
+# Python - bytecode and caches
+__pycache__/
+*.py[cod]
+*$py.class
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+.coverage
+coverage.xml
+htmlcov/
+
+# Python - environments and builds
+.venv/
+venv/
+env/
+build/
+dist/
+*.egg-info/
+pip-wheel-metadata/
+
+# LabVIEW - generated and machine-local files
+*.aliases
+*.lvlps
+*.lvlibp
+*.llb.bak
+*.vi.bak
+*.ctl.bak
+*.lvproj.bak
+*.lvlib.bak
+*.tmp
+*.log
+~$*
+.cache/
+
+# Editors and operating systems
+.idea/
+.vscode/
+*.code-workspace
+*.swp
+*.swo
+.DS_Store
+Thumbs.db
+Desktop.ini
+
+# Local secrets and configuration
+.env
+.env.*
+!.env.example
