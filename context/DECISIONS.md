@@ -50,3 +50,15 @@ próbki jednego zdarzenia nie mogą być losowo mieszane między train i validat
 
 Pliki pickle mogą wykonywać kod podczas wczytywania. Należy ładować wyłącznie
 model utworzony w tym projekcie albo pochodzący z innego zaufanego źródła.
+
+## D-009 - Grid off może działać jako jawna ekstrapolacja
+
+Jeżeli nie ma rzeczywistych danych `grid_off`, generator może wyzerować wszystkie
+rejestry Grid i użyć zachowania Inverter z najbliższego nauczonego reżimu
+`grid_on`. Load jest ponownie budowany z zachowaniem empirycznego błędu
+`Pl-Pg-Pi`.
+
+Każdy taki wynik musi mieć `generation_status=extrapolation_unverified` i opis
+założenia. Nie wolno przedstawiać go jako zachowania nauczonego lub pomiarowo
+potwierdzonego. Rzeczywiste dane `grid_off`, jeśli kiedyś się pojawią, mają
+pierwszeństwo i automatycznie zastępują fallback.

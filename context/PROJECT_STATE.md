@@ -24,6 +24,8 @@ Model bazowy nie zna i nie generuje referencyjnych wartości `Q` ani `S`.
 - Wymaganie potwierdzonego zaniku zmian zamiast stałego czasu odcięcia.
 - Bootstrap empirycznego, wspólnego rozkładu błędów `Pl-Pg-Pi` i błędów sum.
 - Automatyczne oddzielenie plików `czajnik*.csv` od treningu modelu bazowego.
+- Jawny fallback `grid_off` oznaczony jako `extrapolation_unverified`, gdy nie ma
+  rzeczywistych danych fizycznego odłączenia.
 - Bezpieczny interfejs `apply_active_load`, który odmawia tworzenia sztucznej
   reakcji do czasu wyuczenia modelu na rzeczywistych parach interwencyjnych.
 
@@ -52,7 +54,8 @@ deye-model inspect --model models\deye_simulator.pkl
 ## Brakujące dane
 
 - Rzeczywiste zdarzenia czajnikowe dla poszczególnych trybów i faz.
-- Potwierdzone dane fizycznego `grid_off`.
+- Potwierdzone dane fizycznego `grid_off`. Tryb działa bez nich wyłącznie jako
+  jawna, niezweryfikowana ekstrapolacja.
 - Sparowane zmiany trybu przy możliwie niezmienionym obciążeniu fizycznym.
 
 Brak tych danych nie może być zastępowany założeniami fizycznymi ani sztucznym

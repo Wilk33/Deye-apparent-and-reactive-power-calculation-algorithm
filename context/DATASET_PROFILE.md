@@ -53,7 +53,8 @@ użycia hipotez `Q/S` jako danych treningowych.
 - Wykryte gwałtowne zmiany wielosensorowe: 1851.
 
 Minimalne napięcie fazowe Grid wynosi 216,1 V, a maksymalne 243,0 V. Nie ma
-podstaw do trenowania fizycznego `grid_off`.
+podstaw do trenowania fizycznego `grid_off`. Generator może tworzyć ten tryb
+wyłącznie jako wynik `extrapolation_unverified`, zgodnie z `DECISIONS.md`.
 
 ## Ocena
 

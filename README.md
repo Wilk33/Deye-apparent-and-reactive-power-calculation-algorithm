@@ -118,6 +118,11 @@ nauczenia osobnej transformacji czysto czynnej. Do czasu dostarczenia takich
 danych `apply_active_load` jawnie odmawia działania zamiast tworzyć sztuczną
 odpowiedź falownika.
 
+Tryb `grid_off` może być generowany również bez rzeczywistych przykładów, ale
+jest wtedy jawnie oznaczony jako `extrapolation_unverified`. Rejestry Grid są
+zerowane, a pozostałe zachowanie pochodzi z najbliższego nauczonego reżimu
+`grid_on`. Tego wyniku nie należy traktować jako pomiarowo zweryfikowanego.
+
 ## Kontynuacja na innym urządzeniu
 
 Katalog `context` zawiera nadrzędną specyfikację, aktualny stan, decyzje,

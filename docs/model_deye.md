@@ -51,6 +51,8 @@ Wynik zawiera dodatkowo:
 - `simulation_time_s` - czas symulacji w sekundach,
 - `operating_mode` - tryb żądany przez użytkownika,
 - `source_regime` - szczegółowy reżim użyty przez generator,
+- `generation_status` - `trained` albo `extrapolation_unverified`,
+- `assumption` - jawny opis założenia dla próbek ekstrapolowanych,
 - `model_type` - typ generatora.
 
 ## Sensory używane tylko do treningu
@@ -91,9 +93,23 @@ Przy aktywnym Grid reżim jest dalej dzielony według sumy mocy fazowej Grid:
 eksport i idle zgodnie z ich udziałem w danych treningowych.
 
 Aktualny CSV nie zawiera `grid_off`. Najniższe napięcie Grid wynosi 216,1 V.
-Generator odmawia więc generowania `grid_off`. Tryb pojawi się automatycznie po
-ponownym treningu na danych zawierających co najmniej 100 stabilnych próbek z
-napięciami wszystkich faz poniżej 50 V.
+Generator może mimo to tworzyć ten tryb jako jawną, niezweryfikowaną
+ekstrapolację. Rejestry napięcia, prądu i mocy Grid są wtedy zerowane. Zachowanie
+Inverter pochodzi z najbliższego dostępnego stabilnego reżimu `grid_on`, domyślnie
+`grid_on_idle`, a Load jest ponownie wyznaczany z zachowaniem empirycznego błędu
+`Pl-Pg-Pi`.
+
+Takie próbki mają:
+
+```text
+generation_status=extrapolation_unverified
+model_type=assumption_based_grid_off
+```
+
+Nie należy traktować ich jako równoważnych próbkom nauczonym z rzeczywistego
+`grid_off`. Jeśli w przyszłości pojawi się co najmniej 100 stabilnych próbek
+fizycznego odłączenia, model automatycznie użyje danych treningowych, a status
+zmieni się na `trained`.
 
 ## Usuwanie przejść
 

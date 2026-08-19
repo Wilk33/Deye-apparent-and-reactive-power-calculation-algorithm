@@ -11,7 +11,6 @@ from deye_power_calculation.model_deye import (
 	DeyeModel,
 	InterventionUnavailableError,
 	OperatingMode,
-	UnsupportedModeError,
 )
 
 
@@ -155,12 +154,31 @@ def test_generation_is_deterministic_after_loading(
 	pd.testing.assert_frame_equal(first, second)
 
 
-def test_grid_off_requires_real_training_examples(tmp_path:Path)->None:
+def test_grid_off_without_training_is_marked_as_unverified_extrapolation(
+	tmp_path:Path,
+)->None:
 	csv_path=tmp_path/"grid_on_only.csv"
 	_write_measurements(csv_path, include_grid_off=False)
 	model=DeyeModel.from_csv_files(csv_path)
-	with pytest.raises(UnsupportedModeError, match="nie występuje"):
-		model.generate(OperatingMode.GRID_OFF)
+	generated=model.generate(OperatingMode.GRID_OFF, random_state=19)
+	assert len(generated) == 100
+	assert set(generated["generation_status"]) == {"extrapolation_unverified"}
+	assert set(generated["model_type"]) == {"assumption_based_grid_off"}
+	grid_registers=[
+		"sensor.deye_grid_current",
+		"sensor.deye_grid_power",
+		*[f"sensor.deye_grid_{phase}_current" for phase in ("l1", "l2", "l3")],
+		*[f"sensor.deye_grid_{phase}_power" for phase in ("l1", "l2", "l3")],
+		*[f"sensor.deye_grid_{phase}_voltage" for phase in ("l1", "l2", "l3")],
+	]
+	existing=[name for name in grid_registers if name in generated.columns]
+	assert (generated[existing] == 0.0).all().all()
+
+
+def test_grid_off_with_training_is_marked_as_trained(fitted_model:DeyeModel)->None:
+	generated=fitted_model.generate(OperatingMode.GRID_OFF, random_state=20)
+	assert set(generated["generation_status"]) == {"trained"}
+	assert set(generated["source_regime"]) == {"grid_off"}
 
 
 def test_generated_values_stay_inside_learned_bounds(fitted_model:DeyeModel)->None:

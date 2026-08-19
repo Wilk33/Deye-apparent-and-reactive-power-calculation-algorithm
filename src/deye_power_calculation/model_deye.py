@@ -281,11 +281,28 @@ class DeyeModel:
 		return model
 
 	def available_modes(self)->dict[str, int]:
+		"""Zwróć wyłącznie tryby nauczone z rzeczywistych danych."""
 		counts={name:model.training_samples for name, model in self.regime_models.items()}
 		grid_on_count=sum(counts.get(mode.value, 0) for mode in DETAILED_GRID_ON_MODES)
 		if grid_on_count:
 			counts={OperatingMode.GRID_ON.value:grid_on_count, **counts}
 		return counts
+
+	def generation_capabilities(self)->dict[str, dict[str, object]]:
+		"""Opisz tryby generowane z danych i jawne ekstrapolacje."""
+		capabilities={
+			name:{"status":"trained", "training_samples":count}
+			for name, count in self.available_modes().items()
+		}
+		if OperatingMode.GRID_OFF.value not in capabilities and self.regime_models:
+			capabilities[OperatingMode.GRID_OFF.value]={
+				"status":"extrapolation_unverified",
+				"training_samples":0,
+				"assumption":(
+					"Grid registers are zero; inverter behavior comes from a trained grid_on regime."
+				),
+			}
+		return capabilities
 
 	def generate(
 		self,
@@ -321,6 +338,8 @@ class DeyeModel:
 			"simulation_time_s",
 			"operating_mode",
 			"source_regime",
+			"generation_status",
+			"assumption",
 			"model_type",
 		]
 		return result[metadata+self.feature_columns]
@@ -385,7 +404,9 @@ class DeyeModel:
 			"Generator nie wyznacza VA ani var.",
 		]
 		if OperatingMode.GRID_OFF.value not in self.regime_models:
-			limitations.append("Aktualny zbiór nie zawiera fizycznego grid_off.")
+			limitations.append(
+				"Grid_off jest założeniową, niezweryfikowaną ekstrapolacją bez danych fizycznych."
+			)
 		if not self.intervention_models:
 			limitations.append(
 				"Interwencje czynne wymagają rzeczywistych par z plików czajnik*.csv."
@@ -399,6 +420,7 @@ class DeyeModel:
 			"training_only_sensors":sorted(TRAINING_ONLY_SENSORS),
 			"excluded_output_sensors":sorted(EXCLUDED_OUTPUT_SENSORS),
 			"available_modes":self.available_modes(),
+			"generation_capabilities":self.generation_capabilities(),
 			"active_load_intervention":{
 				"available":bool(self.intervention_models),
 				"source_files":self.intervention_source_files,
@@ -664,6 +686,8 @@ class DeyeModel:
 				if local_count == 0:
 					continue
 				part=self._generate_sequence(name, int(local_count), rng)
+				part.insert(0, "assumption", "")
+				part.insert(0, "generation_status", "trained")
 				part.insert(0, "source_regime", name)
 				part.insert(0, "operating_mode", requested.value)
 				part.insert(0, "sequence_id", sequence_id)
@@ -672,12 +696,27 @@ class DeyeModel:
 				mode_index+=len(part)
 				sequence_id+=1
 			return pd.concat(parts, ignore_index=True), sequence_id
+		if requested == OperatingMode.GRID_OFF and requested.value not in self.regime_models:
+			part, source=self._generate_untrained_grid_off(count, rng)
+			part.insert(
+				0,
+				"assumption",
+				"Grid registers forced to zero; inverter behavior extrapolated from "+source,
+			)
+			part.insert(0, "generation_status", "extrapolation_unverified")
+			part.insert(0, "source_regime", source)
+			part.insert(0, "operating_mode", requested.value)
+			part.insert(0, "sequence_id", sequence_id)
+			part.insert(0, "mode_sample_index", np.arange(len(part)))
+			return part, sequence_id+1
 		if requested.value not in self.regime_models:
 			available=", ".join(self.available_modes()) or "brak"
 			raise UnsupportedModeError(
 				f"Tryb {requested.value} nie występuje w danych treningowych. Dostępne: {available}"
 			)
 		part=self._generate_sequence(requested.value, count, rng)
+		part.insert(0, "assumption", "")
+		part.insert(0, "generation_status", "trained")
 		part.insert(0, "source_regime", requested.value)
 		part.insert(0, "operating_mode", requested.value)
 		part.insert(0, "sequence_id", sequence_id)
@@ -715,6 +754,57 @@ class DeyeModel:
 		step_seconds=pd.to_timedelta(self.config.frequency).total_seconds()
 		frame.insert(0, "simulation_time_s", np.arange(count)*step_seconds)
 		return frame
+
+	def _generate_untrained_grid_off(
+		self,
+		count:int,
+		rng:np.random.Generator,
+	)->tuple[pd.DataFrame, str]:
+		"""Utwórz jawnie niezweryfikowany fallback bez udawania danych treningowych."""
+		preferred=(
+			OperatingMode.GRID_ON_IDLE.value,
+			OperatingMode.GRID_ON_IMPORT.value,
+			OperatingMode.GRID_ON_EXPORT.value,
+		)
+		source=next((name for name in preferred if name in self.regime_models), None)
+		if source is None:
+			raise UnsupportedModeError("Brak reżimu grid_on do ekstrapolacji grid_off")
+		frame=self._generate_sequence(source, count, rng)
+		self._convert_to_untrained_grid_off(frame)
+		frame["model_type"]="assumption_based_grid_off"
+		return frame, source
+
+	def _convert_to_untrained_grid_off(self, frame:pd.DataFrame)->None:
+		phase_errors={}
+		for phase in PHASES:
+			load=f"sensor.deye_load_{phase}_power"
+			grid=f"sensor.deye_grid_{phase}_power"
+			inverter=f"sensor.deye_inverter_{phase}_power"
+			if {load, grid, inverter}<=set(frame.columns):
+				phase_errors[phase]=frame[load]-frame[grid]-frame[inverter]
+		total_errors={}
+		for prefix in ("inverter", "load"):
+			total=f"sensor.deye_{prefix}_power"
+			phases=[f"sensor.deye_{prefix}_{phase}_power" for phase in PHASES]
+			if total in frame.columns and set(phases)<=set(frame.columns):
+				total_errors[prefix]=frame[total]-frame[phases].sum(axis=1)
+		grid_registers={
+			"sensor.deye_grid_current",
+			"sensor.deye_grid_power",
+			*GRID_VOLTAGE_SENSORS,
+			*GRID_PHASE_POWER_SENSORS,
+			*(f"sensor.deye_grid_{phase}_current" for phase in PHASES),
+		}
+		for sensor in grid_registers&set(frame.columns):
+			frame[sensor]=0.0
+		for phase, error in phase_errors.items():
+			load=f"sensor.deye_load_{phase}_power"
+			inverter=f"sensor.deye_inverter_{phase}_power"
+			frame[load]=frame[inverter]+error
+		for prefix, error in total_errors.items():
+			total=f"sensor.deye_{prefix}_power"
+			phases=[f"sensor.deye_{prefix}_{phase}_power" for phase in PHASES]
+			frame[total]=frame[phases].sum(axis=1)+error
 
 	def _power_residual_matrix(self, frame:pd.DataFrame)->tuple[tuple[str, ...], np.ndarray]:
 		residuals:dict[str, pd.Series]={}
