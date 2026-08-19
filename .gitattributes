@@ -1,0 +1,17 @@
+* text=auto
+.editorconfig text eol=lf
+.gitattributes text eol=lf
+.gitignore text eol=lf
+*.py text eol=lf
+*.md text eol=lf
+*.toml text eol=lf
+*.csv text eol=lf
+
+# LabVIEW source files use a binary format.
+*.vi binary
+*.ctl binary
+*.lvlib binary
+*.lvclass binary
+*.lvproj binary
+*.xctl binary
+*.llb binary
