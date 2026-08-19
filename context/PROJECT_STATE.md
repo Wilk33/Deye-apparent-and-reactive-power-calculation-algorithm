@@ -30,9 +30,18 @@ Model bazowy nie zna i nie generuje referencyjnych wartości `Q` ani `S`.
 ## Zweryfikowane dane bazowe
 
 Plik `data/history.csv` ma format długi: `entity_id`, `state`, `last_changed`.
-W ostatniej walidacji zawierał 43 encje i 166746 wierszy, z których po
-synchronizacji powstało 9120 kompletnych chwil pomiarowych. Dane obejmują
+W ostatniej walidacji zawierał 30 encji i 286782 wiersze, z których po
+synchronizacji powstały 15294 kompletne chwile pomiarowe. Zakres danych wynosi
+od 2026-08-17 22:00:00 UTC do 2026-08-19 12:58:31.023 UTC. Dane obejmują
 fizycznie połączoną sieć. Nie zawierają potwierdzonego `grid_off`.
+
+Po odrzuceniu przejść model został wytrenowany na:
+
+- 294 stabilnych próbkach `grid_on_import`,
+- 1458 stabilnych próbkach `grid_on_export`,
+- 6871 stabilnych próbkach `grid_on_idle`.
+
+Szczegółowe porównanie z poprzednią wersją znajduje się w `DATASET_PROFILE.md`.
 
 Dokładne, aktualne liczby po każdym treningu należy odczytać poleceniem:
 

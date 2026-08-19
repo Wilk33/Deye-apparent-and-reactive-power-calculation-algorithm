@@ -10,7 +10,8 @@ Kolejność czytania:
 2. `PROJECT_STATE.md` - stan wykonanej pracy i zweryfikowane wyniki.
 3. `DECISIONS.md` - decyzje architektoniczne i ich uzasadnienie.
 4. `DATA_CONTRACT.md` - wymagany format danych historycznych i czajnikowych.
-5. `NEXT_STEPS.md` - kolejność dalszych prac.
+5. `DATASET_PROFILE.md` - zweryfikowany profil aktualnego `history.csv`.
+6. `NEXT_STEPS.md` - kolejność dalszych prac.
 
 Dokumentacja użytkowa modelu znajduje się w `docs/model_deye.md`. Kod źródłowy
 znajduje się w `src/deye_power_calculation/model_deye.py`, a testy w

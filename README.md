@@ -19,6 +19,8 @@ Projekt przewiduje dwie implementacje:
 |   |-- PROJECT_STATE.md
 |   |-- DECISIONS.md
 |   |-- DATA_CONTRACT.md
+|   |-- DATASET_PROFILE.md
+|   |-- SPEC_TRENINGU_MODELU_DEYE_QID.md
 |   `-- NEXT_STEPS.md
 |-- labview/
 |   `-- README.md
