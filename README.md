@@ -39,11 +39,11 @@ warto rozważyć Git LFS albo publikowanie danych jako osobnego artefaktu.
 
 ## Środowisko Python
 
-Wymagany jest Python 3.11 lub nowszy. Utworzenie środowiska i instalacja projektu
+Wymagany jest Python 3.10 lub nowszy. Utworzenie środowiska i instalacja projektu
 w trybie edytowalnym:
 
 ```powershell
-py -3.11 -m venv .venv
+python -m venv .venv
 .\.venv\Scripts\Activate.ps1
 python -m pip install --upgrade pip
 python -m pip install -e ".[dev]"
