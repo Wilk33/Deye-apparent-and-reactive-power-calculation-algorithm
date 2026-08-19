@@ -12,7 +12,13 @@ license="Apache-2.0"
 authors=[
 	{name="Wilk33"},
 ]
-dependencies=[]
+dependencies=[
+	"numpy>=1.24",
+	"pandas>=2.0",
+]
+
+[project.scripts]
+deye-model="deye_power_calculation.model_deye:main"
 
 [project.optional-dependencies]
 dev=[
