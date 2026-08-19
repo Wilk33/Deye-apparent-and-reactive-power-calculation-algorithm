@@ -62,3 +62,13 @@ Każdy taki wynik musi mieć `generation_status=extrapolation_unverified` i opis
 założenia. Nie wolno przedstawiać go jako zachowania nauczonego lub pomiarowo
 potwierdzonego. Rzeczywiste dane `grid_off`, jeśli kiedyś się pojawią, mają
 pierwszeństwo i automatycznie zastępują fallback.
+
+## D-010 - Nazwy wejściowe i regionalny format wyjścia są stałym kontraktem
+
+Trening bazowy przyjmuje ze wskazanego katalogu wyłącznie pliki pasujące do
+`history*.csv`. Umożliwia to dokładanie kolejnych eksportów bez zmiany kodu i
+chroni model przed przypadkowym wczytaniem innych CSV.
+
+Wyniki generatora są zapisywane z separatorem kolumn `;` i separatorem
+dziesiętnym `,`. Jest to domyślny kontrakt pliku wynikowego dla Pythona, LabVIEW
+i narzędzi używających polskich ustawień regionalnych.

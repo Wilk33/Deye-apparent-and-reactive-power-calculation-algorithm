@@ -21,7 +21,7 @@ Przykład:
 
 ```powershell
 deye-model fit `
-	--csv data/history.csv `
+	--csv data `
 	--model models/deye_simulator.pkl `
 	--summary
 
@@ -36,6 +36,37 @@ deye-model generate `
 
 Pliki pickle mogą wykonywać kod podczas wczytywania. Należy wczytywać wyłącznie
 pliki modelu utworzone lokalnie albo pochodzące z zaufanego źródła.
+
+## Konwencja plików CSV
+
+Podczas treningu ze wskazanego katalogu model automatycznie wybiera wyłącznie:
+
+```text
+history*.csv
+```
+
+Przykładowe poprawne nazwy:
+
+```text
+history.csv
+history(1).csv
+history_2026-08-20.csv
+```
+
+Wszystkie takie pliki są łączone przed synchronizacją. CSV o innych nazwach nie
+trafiają do modelu bazowego. Pliki `czajnik*.csv` są nadal wykrywane osobno jako
+przyszłe dane interwencji.
+
+Wygenerowany CSV ma separator kolumn `;` i separator dziesiętny `,`. Przykład
+odczytu:
+
+```python
+generated=pd.read_csv(
+	"generated/deye_simulated_import_export_200.csv",
+	sep=";",
+	decimal=",",
+)
+```
 
 ## Znaczenie próbki
 
@@ -204,7 +235,8 @@ zwraca dokładnie 200 próbek.
 
 ## Dodawanie kolejnych danych
 
-Po dostarczeniu nowych plików należy ponownie wytrenować model na całym katalogu:
+Po dostarczeniu nowych plików `history*.csv` należy ponownie wytrenować model na
+całym katalogu:
 
 ```powershell
 deye-model fit `

@@ -14,7 +14,10 @@ Model bazowy nie zna i nie generuje referencyjnych wartości `Q` ani `S`.
 
 - Wielowymiarowy generator VAR(1) z bootstrapem całych wektorów reszt.
 - Trening na jednym lub wielu zwykłych plikach CSV.
+- Automatyczne wybieranie wszystkich plików `history*.csv` ze wskazanego
+  katalogu i ignorowanie pozostałych nazw w treningu bazowym.
 - Zapis modelu do zaufanego pliku pickle i generowanie bez ponownego czytania CSV.
+- Zapis wynikowego CSV z separatorem kolumn `;` i separatorem dziesiętnym `,`.
 - Minimum 100 generowanych próbek dla każdego żądanego trybu.
 - Łączenie trybów, na przykład import i eksport daje po 100 próbek na tryb.
 - Ukryte użycie `pv_power` i `battery_power` do segmentacji bez ich publikowania.

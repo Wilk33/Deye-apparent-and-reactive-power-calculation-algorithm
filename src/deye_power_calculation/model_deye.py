@@ -26,7 +26,10 @@ import pandas as pd
 MODEL_FORMAT_VERSION=3
 
 PHASES=("l1", "l2", "l3")
+HISTORY_FILE_PATTERN=re.compile(r"^history.*\.csv$", re.IGNORECASE)
 INTERVENTION_FILE_PATTERN=re.compile(r"^czajnik.*\.csv$", re.IGNORECASE)
+GENERATED_CSV_SEPARATOR=";"
+GENERATED_CSV_DECIMAL=","
 
 
 class OperatingMode(str, Enum):
@@ -394,7 +397,12 @@ class DeyeModel:
 		)
 		output=Path(output_path)
 		output.parent.mkdir(parents=True, exist_ok=True)
-		generated.to_csv(output, index=False)
+		generated.to_csv(
+			output,
+			index=False,
+			sep=GENERATED_CSV_SEPARATOR,
+			decimal=GENERATED_CSV_DECIMAL,
+		)
 		return generated
 
 	def summary(self)->dict[str, object]:
@@ -415,6 +423,11 @@ class DeyeModel:
 			"model_format_version":MODEL_FORMAT_VERSION,
 			"model_type":"multivariate_var1_residual_bootstrap",
 			"source_files":self.source_files,
+			"history_file_pattern":"history*.csv",
+			"generated_csv_format":{
+				"column_separator":GENERATED_CSV_SEPARATOR,
+				"decimal_separator":GENERATED_CSV_DECIMAL,
+			},
 			"feature_count":len(self.feature_columns),
 			"feature_columns":self.feature_columns,
 			"training_only_sensors":sorted(TRAINING_ONLY_SENSORS),
@@ -441,17 +454,23 @@ class DeyeModel:
 		for item in items:
 			path=Path(item).expanduser()
 			if path.is_dir():
-				files.extend(sorted(path.glob("*.csv")))
+				files.extend(
+					sorted(
+						candidate
+						for candidate in path.iterdir()
+						if candidate.is_file() and candidate.suffix.lower() == ".csv"
+					)
+				)
 			elif path.is_file():
 				files.append(path)
 			else:
 				files.extend(sorted(path.parent.glob(path.name)))
 		unique=sorted({path.resolve() for path in files})
 		intervention_files=[path for path in unique if INTERVENTION_FILE_PATTERN.match(path.name)]
-		base_files=[path for path in unique if path not in intervention_files]
+		base_files=[path for path in unique if HISTORY_FILE_PATTERN.match(path.name)]
 		self.intervention_source_files=[str(path) for path in intervention_files]
 		if not base_files:
-			raise FileNotFoundError("Nie znaleziono żadnego pliku CSV")
+			raise FileNotFoundError("Nie znaleziono żadnego pliku history*.csv")
 		self.source_files=[str(path) for path in base_files]
 		return base_files
 
@@ -969,7 +988,12 @@ def _build_parser()->argparse.ArgumentParser:
 	parser=argparse.ArgumentParser(description="Generatywny symulator falownika Deye")
 	subparsers=parser.add_subparsers(dest="command", required=True)
 	fit=subparsers.add_parser("fit", help="Wytrenuj i zapisz model")
-	fit.add_argument("--csv", nargs="+", required=True, help="Pliki CSV lub katalogi")
+	fit.add_argument(
+		"--csv",
+		nargs="+",
+		required=True,
+		help="Pliki history*.csv, ich wzorce albo katalogi zawierające takie pliki",
+	)
 	fit.add_argument("--model", type=Path, required=True, help="Docelowy plik modelu")
 	fit.add_argument("--summary", action="store_true")
 	generate=subparsers.add_parser("generate", help="Generuj bez dostępu do CSV")

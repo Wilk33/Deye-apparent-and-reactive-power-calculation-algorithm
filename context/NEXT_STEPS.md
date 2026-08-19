@@ -31,7 +31,7 @@
 pytest
 ruff check .
 python -m compileall -q src
-deye-model fit --csv data\history.csv --model models\deye_simulator.pkl --summary
+deye-model fit --csv data --model models\deye_simulator.pkl --summary
 deye-model generate --model models\deye_simulator.pkl `
 	--mode grid_on_export --mode grid_on_idle `
 	--samples-per-mode 100 --random-state 42 `

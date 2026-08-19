@@ -16,7 +16,31 @@ last_changed
 - Czasy są normalizowane do UTC.
 - Model synchronizuje sensory na siatce określonej przez `ModelConfig.frequency`.
 
-Zwykłe pliki mogą mieć dowolną nazwę poza wzorcem `czajnik*.csv`.
+Pliki bazowe muszą pasować do:
+
+```text
+history*.csv
+```
+
+Model łączy wszystkie pasujące pliki ze wskazanego katalogu. CSV o innych
+nazwach są ignorowane przez trening bazowy. Zapobiega to przypadkowemu użyciu
+plików wynikowych, manifestów albo danych innych eksperymentów.
+
+## Format wygenerowanego CSV
+
+Wyniki generatora są zapisywane z ustawieniami:
+
+```text
+separator kolumn: ;
+separator dziesiętny: ,
+kodowanie: UTF-8
+```
+
+Przykład odczytu w pandas:
+
+```python
+generated=pd.read_csv(path,sep=";",decimal=",")
+```
 
 ## Dane interwencji czysto czynnej
 

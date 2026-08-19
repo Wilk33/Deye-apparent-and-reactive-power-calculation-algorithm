@@ -107,7 +107,7 @@ def _write_measurements(path:Path, include_grid_off:bool=True)->None:
 
 @pytest.fixture
 def fitted_model(tmp_path:Path)->DeyeModel:
-	csv_path=tmp_path/"measurements.csv"
+	csv_path=tmp_path/"history_test.csv"
 	_write_measurements(csv_path)
 	return DeyeModel.from_csv_files(csv_path)
 
@@ -157,7 +157,7 @@ def test_generation_is_deterministic_after_loading(
 def test_grid_off_without_training_is_marked_as_unverified_extrapolation(
 	tmp_path:Path,
 )->None:
-	csv_path=tmp_path/"grid_on_only.csv"
+	csv_path=tmp_path/"history_grid_on_only.csv"
 	_write_measurements(csv_path, include_grid_off=False)
 	model=DeyeModel.from_csv_files(csv_path)
 	generated=model.generate(OperatingMode.GRID_OFF, random_state=19)
@@ -236,13 +236,36 @@ def test_active_load_refuses_to_invent_response_without_kettle_pairs(
 
 def test_kettle_csv_is_not_mixed_into_base_training(tmp_path:Path)->None:
 	base=tmp_path/"history.csv"
+	additional=tmp_path/"history_part_2.csv"
 	kettle=tmp_path/"czajnik1.csv"
+	unrelated=tmp_path/"measurements.csv"
 	_write_measurements(base)
+	_write_measurements(additional)
 	_write_measurements(kettle)
+	_write_measurements(unrelated)
 	model=DeyeModel.from_csv_files(tmp_path)
-	assert model.source_files == [str(base.resolve())]
+	assert model.source_files == [str(base.resolve()), str(additional.resolve())]
 	assert model.intervention_source_files == [str(kettle.resolve())]
 	assert model.summary()["active_load_intervention"]["available"] is False
+
+
+def test_generated_csv_uses_semicolon_and_decimal_comma(
+	fitted_model:DeyeModel,
+	tmp_path:Path,
+)->None:
+	output=tmp_path/"generated.csv"
+	expected=fitted_model.save_generated(
+		output,
+		"grid_on_idle",
+		random_state=31,
+	)
+	lines=output.read_text(encoding="utf-8").splitlines()
+	assert lines[0].count(";") == len(expected.columns)-1
+	assert "," in lines[1]
+	loaded=pd.read_csv(output,sep=";",decimal=",")
+	assert len(loaded) == 100
+	assert list(loaded.columns) == list(expected.columns)
+	assert loaded["simulation_time_s"].iloc[1] == 5.0
 
 
 def test_stability_detection_is_based_on_multisensor_change(

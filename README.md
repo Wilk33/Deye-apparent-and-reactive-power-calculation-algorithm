@@ -13,7 +13,7 @@ Projekt przewiduje dwie implementacje:
 ```text
 .
 |-- data/
-|   `-- history.csv
+|   `-- history*.csv
 |-- context/
 |   |-- README.md
 |   |-- PROJECT_STATE.md
@@ -36,14 +36,16 @@ Projekt przewiduje dwie implementacje:
 
 ## Dane pomiarowe
 
-Plik `data/history.csv` zawiera próbki pomiarowe w kolumnach:
+Pliki `data/history*.csv` zawierają próbki pomiarowe w kolumnach:
 
 - `entity_id` - identyfikator encji pomiarowej,
 - `state` - zarejestrowana wartość,
 - `last_changed` - znacznik czasu próbki.
 
-Plik jest przechowywany bezpośrednio w Git. Przy znacznie większych zbiorach danych
-warto rozważyć Git LFS albo publikowanie danych jako osobnego artefaktu.
+Model automatycznie łączy wszystkie pliki pasujące do `history*.csv` ze
+wskazanego katalogu. Pozostałe CSV nie trafiają do treningu bazowego. Pliki są
+przechowywane bezpośrednio w Git. Przy znacznie większych zbiorach danych warto
+rozważyć Git LFS albo publikowanie danych jako osobnego artefaktu.
 
 ## Środowisko Python
 
@@ -75,7 +77,7 @@ Najpierw należy wytrenować i zapisać model:
 
 ```powershell
 deye-model fit `
-	--csv data/history.csv `
+	--csv data `
 	--model models/deye_simulator.pkl `
 	--summary
 ```
@@ -89,6 +91,23 @@ deye-model generate `
 	--mode grid_on_export `
 	--samples-per-mode 100 `
 	--output generated/deye_simulated_200.csv
+```
+
+Wygenerowany CSV używa formatu wygodnego dla polskich ustawień regionalnych:
+
+```text
+separator kolumn: ;
+separator dziesiętny: ,
+```
+
+Przy ponownym odczycie w pandas należy użyć:
+
+```python
+generated=pd.read_csv(
+	"generated/deye_simulated_200.csv",
+	sep=";",
+	decimal=",",
+)
 ```
 
 Z poziomu Pythona:
